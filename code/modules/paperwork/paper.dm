@@ -628,7 +628,7 @@
 	info = get_space_structures_info()
 
 	var/obj/item/weapon/stamp/centcomm/S = new
-	S.stamp_paper(src, "Centcomm Science Department")
+	S.stamp_paper(src, "CentComm Science Department")
 
 	update_icon()
 	updateinfolinks()
@@ -639,6 +639,27 @@
 	for(var/list/structure in SSmapping.spawned_structures)
 		paper_text += "<li><b>[structure["desc"]]</b>: x = [structure["x"]], y = [structure["y"]], z = [prob(50) ? structure["z"] : "unknown"]</li>"
 	return paper_text
+
+/obj/item/weapon/paper/nuclear_code
+	name = "NSS Exodus Nuclear Detonation Device Code (TOP SECRET)"
+
+/obj/item/weapon/paper/nuclear_code/atom_init()
+	. = ..()
+	name = "[station_name()] Nuclear Detonation Device Code (TOP SECRET)"
+
+	var/nukecode = "ERROR"
+	for(var/obj/machinery/nuclearbomb/bomb in poi_list)
+		if(bomb && bomb.r_code)
+			if(is_station_level(bomb.z))
+				nukecode = bomb.r_code
+
+	info = "<b>Nuclear Authentication Code:</b> [nukecode]"
+
+	var/obj/item/weapon/stamp/centcomm/S = new
+	S.stamp_paper(src, "CentComm Security Department")
+
+	update_icon()
+	updateinfolinks()
 
 /obj/item/weapon/paper/cloning_lab
 	name = "paper - 'H-11 Cloning Apparatus Manual"

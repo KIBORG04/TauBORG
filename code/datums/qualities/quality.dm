@@ -72,3 +72,30 @@
 /datum/quality/rts/proc/on_exit(datum/source, area/A, atom/NewLoc)
 	if(istype(A, /area/station/bridge))
 		SEND_SIGNAL(source, COMSIG_ADD_MOOD_EVENT, "rts_failure", /datum/mood_event/rts_failure)
+
+
+
+/datum/quality/nuclear_option
+	desc = "Тебе известен код от бомбы."
+
+	restriction = "Капитан, АВД, Клоун"
+
+/datum/quality/nuclear_option/restriction_check(mob/living/carbon/human/H)
+	return H.mind.assigned_role == "Captain" || H.mind.assigned_role == "Internal Affairs Agent" || H.mind.assigned_role == "Clown"
+
+/datum/quality/nuclear_option/add_effect(mob/living/carbon/human/H)
+	var/nukecode = "ERROR"
+	for(var/obj/machinery/nuclearbomb/bomb in poi_list)
+		if(bomb && bomb.r_code)
+			if(is_station_level(bomb.z))
+				nukecode = bomb.r_code
+
+	to_chat(H, "<span class='bold notice'>Код от бомбы: [nukecode]</span>")
+	H.mind.store_memory("Код от бомбы: [nukecode]")
+
+	var/obj/item/weapon/paper/nuclear_code/NC = new(H)
+	if(H.put_in_hands(NC))
+		return
+	if(H.equip_or_collect(new /obj/item/weapon/paper/nuclear_code(H), SLOT_R_STORE))
+		return
+	qdel(NC)
