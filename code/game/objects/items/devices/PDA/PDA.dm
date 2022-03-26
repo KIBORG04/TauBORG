@@ -79,6 +79,8 @@
 	if(default_pen)
 		pen = new default_pen(src)
 
+	AddComponent(/datum/component/slippery, 4, NONE, CALLBACK(src, .proc/AfterSlip))
+
 /obj/item/device/pda/Destroy()
 	PDAs -= src
 	if (id)
@@ -148,10 +150,6 @@
 	icon_state = "pda-clown"
 	desc = "A portable microcomputer by Thinktronic Systems, LTD. The surface is coated with polytetrafluoroethylene and banana drippings."
 	ttone = "honk"
-
-/obj/item/device/pda/clown/atom_init()
-	. = ..()
-	AddComponent(/datum/component/slippery, 4, NONE, CALLBACK(src, .proc/AfterSlip))
 
 /obj/item/device/pda/clown/proc/AfterSlip(mob/living/carbon/human/M)
 	if (istype(M) && (M.real_name != owner))
