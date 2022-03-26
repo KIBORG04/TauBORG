@@ -19,6 +19,9 @@
 		)
 	outfit = /datum/outfit/job/assistant/test_subject
 
+/datum/job/assistant/post_equip(mob/living/carbon/human/H, visualsOnly)
+	H.mutations |= CLUMSY
+
 /datum/job/assistant/get_access()
 	if(config.assistant_maint)
 		return list(access_maint_tunnels)

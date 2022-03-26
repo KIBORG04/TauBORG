@@ -215,7 +215,7 @@
 	requirement = "Нет."
 
 /datum/quality/clumsy/add_effect(mob/living/carbon/human/H, latespawn)
-	H.mutations.Add(CLUMSY)
+	H.mutations |= CLUMSY
 
 
 var/global/list/allergen_reagents_list
