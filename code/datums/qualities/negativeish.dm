@@ -212,10 +212,7 @@
 
 /datum/quality/clumsy
 	desc = "Ты - неуклюжий, криворукий дурачок. Лучше не трогать всякие опасные штуки!"
-	requirement = "Все, кроме Клоуна."
-
-/datum/quality/clumsy/satisfies_requirements(mob/living/carbon/human/H, latespawn)
-	return H.mind.assigned_role != "Clown"
+	requirement = "Нет."
 
 /datum/quality/clumsy/add_effect(mob/living/carbon/human/H, latespawn)
 	H.mutations.Add(CLUMSY)
