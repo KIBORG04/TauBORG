@@ -302,7 +302,7 @@ var/global/list/image/splatter_cache=list()
 
 /obj/effect/decal/cleanable/blood/hitsplatter/Destroy()
 	if(isturf(loc) && !skip)
-		playsound(src, 'sound/effects/splatter.ogg', 60, TRUE, -1)
+		playsound(src, 'sound/effects/splatter.ogg', VOL_EFFECTS_MASTER)
 		if(blood_owner)
 			var/turf/T = loc
 			T.add_blood_floor(blood_owner)
