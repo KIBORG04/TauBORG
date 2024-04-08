@@ -26,10 +26,18 @@ var/global/datum/controller/master/Master = new()
 	// List of subsystems to process().
 	var/list/subsystems
 
-	// Vars for keeping track of tick drift.
-	var/init_timeofday
-	var/init_time
-	var/tickdrift = 0
+	// Vars for keeping track of time dilation
+	var/time_dilation_current = 0
+
+	// Shows how fast the average value changes due to lag spikes
+	// Also look at #define MC_AVERAGE
+	var/time_dilation_avg_fast = 0
+	var/time_dilation_avg = 0
+	var/time_dilation_avg_slow = 0
+
+	var/last_tick_realtime = 0
+	var/last_tick_byond_time = 0
+	var/last_tick_tickcount = 0
 
 	var/sleep_delta = 1
 
@@ -155,13 +163,13 @@ var/global/datum/controller/master/Master = new()
 	log_initialization("Initializing subsystems...")
 	to_chat(world, "<span class='boldannounce'>Initializing game. Please wait...</span>")
 
-	var/start_timeofday = world.timeofday
+	var/start_timeofday = REALTIMEOFDAY
 	// Initialize subsystems.
 	current_ticklimit = TICK_LIMIT_MC_INIT
 	for (var/datum/controller/subsystem/SS in subsystems)
 		if (SS.flags & SS_NO_INIT)
 			continue
-		SS.Initialize(world.timeofday)
+		SS.Initialize(REALTIMEOFDAY)
 		SS.PostInitialize()
 		CHECK_TICK
 	current_ticklimit = TICK_LIMIT_RUNNING
@@ -264,17 +272,34 @@ var/global/datum/controller/master/Master = new()
 	var/cached_runlevel = null // force subsystems reschedule
 	var/list/current_runlevel_subsystems = null
 
-	init_timeofday = world.timeofday
-	init_time = world.time
-
 	iteration = 1
 	var/error_level = 0
 	var/sleep_delta = 1
 	var/list/subsystems_to_check
 
+	var/is_first_time_dilation_update = TRUE
 	//the actual loop.
 	while (TRUE)
-		tickdrift = max(0, MC_AVERAGE_FAST(tickdrift, (((world.timeofday - init_timeofday) - (world.time - init_time)) / world.tick_lag)))
+		if(iteration % 100 == 0) // not the first run
+			var/current_realtime = REALTIMEOFDAY
+			var/current_byondtime = world.time
+			var/current_tickcount = world.time/world.tick_lag
+
+			if(!is_first_time_dilation_update)
+				var/tick_drift = max(0, (((current_realtime - last_tick_realtime) - (current_byondtime - last_tick_byond_time)) / world.tick_lag))
+
+				time_dilation_current = tick_drift / (current_tickcount - last_tick_tickcount) * 100
+
+				time_dilation_avg_fast = MC_AVERAGE_FAST(time_dilation_avg_fast, time_dilation_current)
+				time_dilation_avg = MC_AVERAGE(time_dilation_avg, time_dilation_avg_fast)
+				time_dilation_avg_slow = MC_AVERAGE_SLOW(time_dilation_avg_slow, time_dilation_avg)
+			else
+				is_first_time_dilation_update = FALSE
+
+			last_tick_realtime = current_realtime
+			last_tick_byond_time = current_byondtime
+			last_tick_tickcount = current_tickcount
+
 		var/starting_tick_usage = TICK_USAGE
 		if (processing <= 0)
 			current_ticklimit = TICK_LIMIT_RUNNING
@@ -545,7 +570,8 @@ var/global/datum/controller/master/Master = new()
 	if(!statclick)
 		statclick = new/obj/effect/statclick/debug(null, "Initializing...", src)
 
-	stat("Byond:", "(FPS:[world.fps]) (TickCount:[world.time / world.tick_lag]) (TickDrift:[round(Master.tickdrift, 1)]([round((Master.tickdrift / (world.time / world.tick_lag)) * 100, 0.1)]%)) (Internal Tick Usage: [round(MAPTICK_LAST_INTERNAL_TICK_USAGE,0.1)]%)")
+	stat("Byond:", "(FPS:[world.fps]) (TickCount:[world.time / world.tick_lag]) (Internal Tick Usage: [round(MAPTICK_LAST_INTERNAL_TICK_USAGE,0.1)]%)")
+	stat("TimeDilation:", "(TimeDilation: [round(Master.time_dilation_current,1)]% AVG:([round(Master.time_dilation_avg_fast,1)]%(FAST), [round(Master.time_dilation_avg,1)]%(STD), [round(Master.time_dilation_avg_slow,1)]%(SLOW))")
 	stat("Master Controller:", statclick.update("(TickRate:[Master.processing]) (Iteration:[Master.iteration]) (TickLimit: [round(Master.current_ticklimit, 0.1)])"))
 
 /datum/controller/master/StartLoadingMap()
