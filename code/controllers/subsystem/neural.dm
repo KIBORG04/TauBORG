@@ -25,7 +25,7 @@ SUBSYSTEM_DEF(neural)
 
 /datum/controller/subsystem/neural/Initialize(start_timeofday)
 	. = ..()
-	if(!config.use_kadinsky)
+	if(!config.use_kadinsky || config.python_path == "")
 		return
 	var/styles_json = get_webpage("https://cdn.fusionbrain.ai/static/styles/api")
 	available_styles = list()
