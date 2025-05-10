@@ -29,10 +29,10 @@ var/global/list/frozen_items = list()
 	dat += "<div class='Section__title'>Cryogenic Oversight Control</div>"
 	dat += "<div class='Section'>"
 	dat += "<i>Welcome, [user.real_name].</i><br/><br/>"
-	dat += "<a href='?src=\ref[src];log=1'>View storage log</a><br>"
-	dat += "<a href='?src=\ref[src];item=1'>Recover object</a><br>"
-	dat += "<a href='?src=\ref[src];allitems=1'>Recover all objects</a><br>"
-	dat += "<a href='?src=\ref[src];crew=1'>Revive crew</a><br/>"
+	dat += "<a href='byond://?src=\ref[src];log=1'>View storage log</a><br>"
+	dat += "<a href='byond://?src=\ref[src];item=1'>Recover object</a><br>"
+	dat += "<a href='byond://?src=\ref[src];allitems=1'>Recover all objects</a><br>"
+	dat += "<a href='byond://?src=\ref[src];crew=1'>Revive crew</a><br/>"
 	dat += "</div>"
 
 	var/datum/browser/popup = new(user, "window=cryopod_console", src.name)
@@ -166,6 +166,23 @@ var/global/list/frozen_items = list()
 	else
 		icon_state = "cryosleeper_left"
 	. = ..()
+
+/obj/machinery/cryopod/Destroy()
+	. = ..()
+	QDEL_NULL(announce)
+
+/obj/machinery/cryopod/ex_act(severity)
+	switch(severity)
+		if(EXPLODE_HEAVY)
+			if(prob(50))
+				return
+		if(EXPLODE_LIGHT)
+			if(prob(75))
+				return
+	for(var/atom/movable/A as anything in contents)
+		A.forceMove(get_turf(src))
+		A.ex_act(severity)
+	qdel(src)
 
 /obj/machinery/cryopod/proc/delete_objective(datum/objective/target/O)
 	if(!O)
@@ -337,6 +354,18 @@ var/global/list/frozen_items = list()
 			PDA_Manifest.Cut()
 			break
 
+/obj/machinery/cryopod/AltClick(mob/user)
+	. = ..()
+	enter_pod(user)
+
+/obj/machinery/cryopod/relaymove(mob/user)
+	..()
+	go_out()
+
+/obj/machinery/cryopod/MouseDrop_T(mob/target, mob/user)
+	. = ..()
+	enter_pod(user)
+
 /obj/machinery/cryopod/verb/eject()
 	set name = "Eject Pod"
 	set category = "Object"
@@ -359,31 +388,33 @@ var/global/list/frozen_items = list()
 	set name = "Enter Pod"
 	set category = "Object"
 	set src in oview(1)
+	enter_pod(usr)
 
-	if(usr.incapacitated() || !(ishuman(usr)))
+/obj/machinery/cryopod/proc/enter_pod(mob/user)
+	if(user.incapacitated() || !(ishuman(user)))
 		return
 
-	if(!usr.IsAdvancedToolUser())
-		to_chat(usr, "<span class='notice'>You have no idea how to do that.</span>")
+	if(!user.IsAdvancedToolUser())
+		to_chat(user, "<span class='notice'>You have no idea how to do that.</span>")
 		return
 
 	if(occupant)
-		to_chat(usr, "<span class='notice'><B>The cryo pod is in use.</B></span>")
+		to_chat(user, "<span class='notice'><B>The cryo pod is in use.</B></span>")
 		return
 
-	for(var/mob/living/carbon/slime/M in range(1, usr))
-		if(M.Victim == usr)
-			to_chat(usr, "You're too busy getting your life sucked out of you.")
+	for(var/mob/living/carbon/slime/M in range(1, user))
+		if(M.Victim == user)
+			to_chat(user, "You're too busy getting your life sucked out of you.")
 			return
-	if(usr.is_busy())
+	if(user.is_busy())
 		return
-	visible_message("[usr] starts climbing into the cryo pod.", 3)
+	visible_message("[user] starts climbing into the cryo pod.", 3)
 	if(do_after(usr, 20, target = src))
 		if(occupant)
-			to_chat(usr, "<span class='notice'><B>The cryo pod is in use.</B></span>")
+			to_chat(user, "<span class='notice'><B>The cryo pod is in use.</B></span>")
 			return
-		insert(usr)
-		add_fingerprint(usr)
+		insert(user)
+		add_fingerprint(user)
 
 /obj/machinery/cryopod/proc/go_out()
 	occupant.forceMove(get_turf(src))

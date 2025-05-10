@@ -168,7 +168,7 @@
 			if(B && iscarbon(target))
 				var/list/virus2 = B.data["virus2"]
 				if(virus2 && virus2.len)
-					message_admins("<font color='red'>Injected blood with virus to [target] by [key_name_admin(user)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) [ADMIN_JMP(user)]</font>",0,1)
+					message_admins("<font color='red'>Injected blood with virus to [target] by [key_name_admin(user)](<A href='byond://?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) [ADMIN_JMP(user)]</font>",0,1)
 					log_game("Injected blood with virus to [target] by [key_name(user)] in [COORD(user)]")
 				var/mob/living/carbon/C = target
 				C.inject_blood(src, 5)
@@ -416,7 +416,7 @@
 
 /obj/item/weapon/reagent_containers/ld50_syringe/choral/atom_init()
 	. = ..()
-	reagents.add_reagent("chloralhydrate", 50)
+	reagents.add_reagent("potassium_chloride", 50)
 	mode = SYRINGE_INJECT
 	update_icon()
 

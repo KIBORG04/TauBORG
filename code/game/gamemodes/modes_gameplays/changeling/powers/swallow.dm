@@ -1,6 +1,7 @@
 /obj/effect/proc_holder/changeling/devour
 	name = "Devour"
 	desc = "Devour our prey whole."
+	button_icon_state = "gib"
 	chemical_cost = 30
 	genomecost = 0
 	max_genetic_damage = 100
@@ -51,6 +52,8 @@
 	user.visible_message("<span class='danger'>[user] devours [target]!</span>",
 	                     "<span class='notice'>We have devour [target]!</span>")
 	to_chat(target, "<span class='danger'>You have been devoured by the changeling!</span>")
+	var/mob/living/carbon/human/changeling = user
+	changeling.mind.pluvian_social_credit += target.mind.pluvian_social_credit
 	for(var/obj/item/I in target)
 		target.drop_from_inventory(I)
 	target.spawn_gibs()

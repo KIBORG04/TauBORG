@@ -103,12 +103,28 @@
 	add_filter("mob_shape_mask", 1, alpha_mask_filter(icon = mob_mask))
 	add_filter("inset_drop_shadow", 2, drop_shadow_filter(size = -1))
 
+/atom/movable/screen/health/diona
+	icon = 'icons/hud/screen_diona.dmi'
+
 /atom/movable/screen/health_doll
 	icon = 'icons/hud/screen_gen.dmi'
 	name = "health doll"
 	screen_loc = ui_healthdoll
 
 	copy_flags = NONE
+
+/atom/movable/screen/health_doll/Click(location, control, params)
+	if(!ishuman(usr))
+		return
+	var/mob/living/carbon/human/H = usr
+	var/willpower_amount
+	if(H.species.flags[NO_WILLPOWER])
+		willpower_amount = "<span class='boldwarning'>НЕТ</span>"
+	else
+		willpower_amount = H.mind.willpower_amount
+	to_chat(usr, "<span class='notice'>Сила Воли: <b>[willpower_amount]</b>.</span>")
+
+	H.mind.do_select_willpower_effect()
 
 /atom/movable/screen/health_doll/add_to_hud(datum/hud/hud)
 	..()

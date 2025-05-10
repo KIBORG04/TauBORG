@@ -50,6 +50,7 @@ var/global/bridge_secret = null
 	var/list/probabilities = list()		// relative probability of each mode
 	var/humans_need_surnames = 0
 	var/allow_random_events = 1			// enables random events mid-round when set to 1
+	var/alt_lobby_menu = 0 // event lobby
 	var/allow_ai = 1					// allow ai job
 	var/hostedby = null
 	var/respawn = 1
@@ -82,7 +83,7 @@ var/global/bridge_secret = null
 	var/disable_player_mice = 0
 	var/uneducated_mice = 0 //Set to 1 to prevent newly-spawned mice from understanding human speech
 
-	var/deathtime_required = 18000	//30 minutes
+	var/deathtime_required = 6000	//10 minutes
 
 	var/usealienwhitelist = 0
 	var/use_alien_job_restriction = 0
@@ -113,11 +114,11 @@ var/global/bridge_secret = null
 	//game_options.txt configs
 
 	var/health_threshold_softcrit = 0
-	var/health_threshold_crit = 0
+	var/health_threshold_crit = -50
 	var/health_threshold_dead = -100
 
 	var/organ_health_multiplier = 1
-	var/organ_regeneration_multiplier = 1
+	var/organ_regeneration_multiplier = 0.75
 
 	var/revival_pod_plants = 1
 	var/revival_cloning = 1
@@ -156,7 +157,6 @@ var/global/bridge_secret = null
 									  EVENT_LEVEL_MAJOR    = 70 MINUTES)
 
 	var/admin_legacy_system = 0	//Defines whether the server uses the legacy admin system with admins.txt or the SQL system. Config option in config.txt
-	var/ban_legacy_system = 0	//Defines whether the server uses the legacy banning system with the files in /data or the SQL system. Config option in config.txt
 	var/use_age_restriction_for_jobs = 0 //Do jobs use account age restrictions? --requires database
 	var/use_ingame_minutes_restriction_for_jobs = 0 //Do jobs use in-game minutes instead account age for restrictions?
 
@@ -171,7 +171,7 @@ var/global/bridge_secret = null
 	var/gateway_enabled = 0
 	var/ghost_interaction = 0
 
-	var/python_path = "" //Path to the python executable.  Defaults to "python" on windows and "/usr/bin/env python2" on unix
+	var/python_path = "" //Path to the python executable.  Defaults to "python" on windows and "/usr/bin/env python3" on unix
 	var/github_token = "" // todo: move this to globals for security
 	var/use_overmap = 0
 
@@ -195,8 +195,7 @@ var/global/bridge_secret = null
 	// The object used for the clickable stat() button.
 	var/obj/effect/statclick/statclick
 
-	var/craft_recipes_visibility = FALSE // If false, then users won't see crafting recipes in personal crafting menu until they have all required components and then it will show up.
-	var/starlight = FALSE	// Whether space turfs have ambient light or not
+	var/craft_recipes_visibility = TRUE // Show all recipes (TRUE) or only these that have all required components around (FALSE) in craft menu.
 	var/nightshift = FALSE
 
 	var/list/maplist = list()
@@ -205,6 +204,12 @@ var/global/bridge_secret = null
 	var/load_junkyard = TRUE
 	var/load_mine = TRUE
 	var/load_space_levels = TRUE
+
+#ifdef EARLY_PROFILE
+	var/auto_profile = TRUE
+#else
+	var/auto_profile = FALSE
+#endif
 
 	var/auto_lag_switch_pop = FALSE
 
@@ -269,9 +274,6 @@ var/global/bridge_secret = null
 
 				if ("admin_legacy_system")
 					config.admin_legacy_system = 1
-
-				if ("ban_legacy_system")
-					config.ban_legacy_system = 1
 
 				if ("byond_version_min")
 					config.byond_version_min = text2num(value)
@@ -531,7 +533,7 @@ var/global/bridge_secret = null
 						config.python_path = value
 					else
 						if(world.system_type == UNIX)
-							config.python_path = "/usr/bin/env python2"
+							config.python_path = "/usr/bin/env python3"
 						else //probably windows, if not this should work anyway
 							config.python_path = "python"
 
@@ -679,6 +681,9 @@ var/global/bridge_secret = null
 				if("no_space_levels")
 					config.load_space_levels = FALSE
 
+				if("auto_profile")
+					config.auto_profile = TRUE
+
 				if("auto_lag_switch_pop")
 					config.auto_lag_switch_pop = text2num(value)
 
@@ -749,8 +754,6 @@ var/global/bridge_secret = null
 					config.organ_regeneration_multiplier = value / 100
 				if("craft_recipes_visibility")
 					config.craft_recipes_visibility = TRUE
-				if("starlight")
-					config.starlight = TRUE
 				if("nightshift")
 					config.nightshift = TRUE
 				if("deathmatch_arena")
@@ -824,22 +827,22 @@ var/global/bridge_secret = null
 /datum/configuration/proc/get_runnable_modes(datum/modesbundle/bundle)
 	var/list/datum/game_mode/runnable_modes = list()
 	var/list/runnable_modes_names = list()
-	for (var/type in bundle.possible_gamemodes)
+	for(var/type in bundle.possible_gamemodes)
 		var/datum/game_mode/M = new type()
-		if (!M.name || !(M.config_name in config_name_by_real))
+		if(!M.name || !(M.config_name in config_name_by_real))
 			qdel(M)
 			continue
-		if (probabilities[M.config_name] <= 0)
+		if(probabilities[M.config_name] <= 0)
 			qdel(M)
 			continue
-		if (global.master_last_mode == M.name)
+		if(global.master_last_mode == M.name)
 			qdel(M)
 			continue
-		if (global.modes_failed_start[M.name])
+		if(global.modes_failed_start[M.name])
 			qdel(M)
 			continue
-		var/mod_prob = probabilities[M.name]
-		if (M.can_start())
+		var/mod_prob = probabilities[M.config_name]
+		if(M.can_start())
 			runnable_modes[M] = mod_prob
 			runnable_modes_names += M.name
 	log_mode("Current pool of gamemodes([runnable_modes.len]):")

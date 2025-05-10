@@ -103,6 +103,7 @@
 		/obj/item/toy/prize/seraph,
 		/obj/item/toy/spinningtoy,
 		/obj/item/toy/sword,
+		/obj/item/toy/dualsword,
 		/obj/item/weapon/reagent_containers/food/snacks/grown/ambrosiadeus,
 		/obj/item/weapon/reagent_containers/food/snacks/grown/ambrosiavulgaris,
 		/obj/item/device/paicard,
@@ -115,6 +116,7 @@
 		/obj/random/plushie,
 		/obj/item/toy/eight_ball,
 		/obj/item/toy/eight_ball/conch,
+		/obj/item/toy/foamblade,
 		)
 
 	if(!ispath(gift_type, /obj/item))

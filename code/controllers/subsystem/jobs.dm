@@ -93,6 +93,9 @@ SUBSYSTEM_DEF(job)
 		player.mind.role_alt_title = GetPlayerAltTitle(player, rank)
 		unassigned -= player
 		job.current_positions++
+
+		if(job.quota == QUOTA_WANTED)
+			job.quota = QUOTA_NEUTRAL
 		return TRUE
 	Debug("AR has failed, Player: [player], Rank: [rank]")
 	return FALSE
@@ -131,7 +134,7 @@ SUBSYSTEM_DEF(job)
 		if(!job)
 			continue
 
-		if(istype(job, GetJob("Test Subject"))) // We don't want to give him assistant, that's boring!
+		if(istype(job, GetJob("Assistant"))) // We don't want to give him assistant, that's boring!
 			continue
 
 		if(job.title in command_positions) //If you want a command position, select it!
@@ -159,8 +162,8 @@ SUBSYSTEM_DEF(job)
 
 	// So we end up here which means every other job is unavailable, lets give him "assistant", since this is the only job without any spawn limit and restrictions.
 	if(player.mind && !player.mind.assigned_role)
-		Debug("GRJ Random job given, Player: [player], Job: Test Subject")
-		AssignRole(player, "Test Subject")
+		Debug("GRJ Random job given, Player: [player], Job: Assistant")
+		AssignRole(player, "Assistant")
 		unassigned -= player
 
 /datum/controller/subsystem/job/proc/ResetOccupations()
@@ -286,7 +289,7 @@ SUBSYSTEM_DEF(job)
 	Debug("AC1, Candidates: [assistant_candidates.len]")
 	for(var/mob/dead/new_player/player in assistant_candidates)
 		Debug("AC1 pass, Player: [player]")
-		AssignRole(player, "Test Subject")
+		AssignRole(player, "Assistant")
 		assistant_candidates -= player
 	Debug("DO, AC1 end")
 
@@ -366,7 +369,7 @@ SUBSYSTEM_DEF(job)
 	for(var/mob/dead/new_player/player in unassigned)
 		if(player.client.prefs.alternate_option == BE_ASSISTANT)
 			Debug("AC2 Assistant located, Player: [player]")
-			AssignRole(player, "Test Subject")
+			AssignRole(player, "Assistant")
 
 	//For ones returning to lobby
 	for(var/mob/dead/new_player/player in unassigned)
@@ -377,7 +380,7 @@ SUBSYSTEM_DEF(job)
 			player.client << output(player.ready, "lobbybrowser:setReadyStatus")
 
 			unassigned -= player
-			to_chat(player, "<span class='alert bold'>You were returned to the lobby because your job preferences unavailable.  You can change this behavior in preferences.</span>")
+			to_chat(player, "<span class='alert bold'>Вы были возвращены в лобби, так как ваши настройки профессии были недоступны. Вы можете это изменить в настройках.</span>")
 	return TRUE
 
 //Gives the player the stuff he should have with his rank
@@ -410,7 +413,7 @@ SUBSYSTEM_DEF(job)
 						permitted = FALSE
 
 					if(!permitted)
-						to_chat(H, "<span class='warning'>Your current job or whitelist status does not permit you to spawn with [thing]!</span>")
+						to_chat(H, "<span class='warning'>Ваша текущая работа или статус в белом списке не позволяют вам появляться с [thing]!</span>")
 						continue
 
 					if(G.slot && !(G.slot in custom_equip_slots))
@@ -445,7 +448,7 @@ SUBSYSTEM_DEF(job)
 					spawn_in_storage += thing
 
 	else
-		to_chat(H, "Your job is [rank] and the game just can't handle it! Please report this bug to an administrator.")
+		to_chat(H, "Ваша профессия - [rank], и игра почему-то не может её обработать! Пожалуйста, сообщите об этой ошибке администратору.")
 
 	H.job = rank
 
@@ -470,7 +473,8 @@ SUBSYSTEM_DEF(job)
 			H.forceMove(spawn_mark.loc, keep_buckled = TRUE)
 
 	//give them an account in the station database
-	var/datum/money_account/M = create_random_account_and_store_in_mind(H, job.salary + job.starting_money, job.department_stocks)	//starting funds = salary
+	var/startingMoney = max(round(job.salary * STARTING_MONEY_MULTIPLYER * (1 + rand(-STARTING_MONEY_VARIANCE, STARTING_MONEY_VARIANCE) / 100)) + job.starting_money, STARTING_MONEY_MINIMUM)
+	var/datum/money_account/M = create_random_account_and_store_in_mind(H, startingMoney, job.department_stocks)	//starting funds = salary
 
 	// If they're head, give them the account info for their department
 	if(H.mind && job.head_position)
@@ -501,25 +505,7 @@ SUBSYSTEM_DEF(job)
 				return TRUE
 			if("AI")
 				return H
-			if("Clown")	//don't need bag preference stuff!
-			else
-				switch(H.backbag) //BS12 EDIT
-					if(2)
-						var/obj/item/weapon/storage/backpack/BPK = new(H)
-						H.equip_to_slot_or_del(BPK, SLOT_BACK,1)
-					if(3)
-						var/obj/item/weapon/storage/backpack/alt/BPK = new(H)
-						H.equip_to_slot_or_del(BPK, SLOT_BACK,1)
-					if(4)
-						var/obj/item/weapon/storage/backpack/satchel/norm/BPK = new(H)
-						H.equip_to_slot_or_del(BPK, SLOT_BACK,1)
-					if(5)
-						var/obj/item/weapon/storage/backpack/satchel/BPK = new(H)
-						H.equip_to_slot_or_del(BPK, SLOT_BACK,1)
 
-	/*
-	Placed here so the backpack that spawns if there is no job backpack has already spawned by now.
-	*/
 	if(H.species)
 		H.species.after_job_equip(H, job)
 
@@ -559,6 +545,11 @@ SUBSYSTEM_DEF(job)
 		to_chat(H, SSround_aspects.aspect.afterspawn_IC_announcement)
 
 	spawnId(H, rank, alt_title)
+
+	var/client/Cl = H.client
+	if(Cl && Cl.player_ingame_age && isnum(Cl.player_ingame_age) && Cl.player_ingame_age < 3000)
+		var/obj/item/clothing/accessory/newbiebadge/badge = new(H)
+		H.equip_or_collect(badge, SLOT_NECK)
 
 //		H.update_icons()
 
@@ -618,6 +609,10 @@ SUBSYSTEM_DEF(job)
 		pda.owner_account = MA.account_number //bind the account to the pda
 		pda.owner_fingerprints += C.fingerprint_hash //save fingerprints in pda from ID card
 		MA.owner_PDA = pda //add PDA in /datum/money_account
+
+		var/chosen_ringtone = H.client?.prefs.chosen_ringtone
+		if(chosen_ringtone)
+			pda.set_ringtone(chosen_ringtone, H.client?.prefs.custom_melody)
 
 	return TRUE
 

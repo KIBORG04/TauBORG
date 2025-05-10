@@ -284,6 +284,7 @@
 //Spraycan stuff
 
 /obj/item/toy/crayon/spraycan
+	name = "spray can"
 	icon_state = "spraycan_cap"
 	desc = "A metallic container containing tasty paint."
 	var/capped = 1
@@ -293,7 +294,6 @@
 
 /obj/item/toy/crayon/spraycan/atom_init()
 	. = ..()
-	name = "spray can"
 	update_icon()
 
 /obj/item/toy/crayon/spraycan/examine(mob/user)
@@ -345,7 +345,7 @@
 		N.cut_overlay(image('icons/effects/Nuke_sprays.dmi', N.spray_icon_state))
 		N.add_overlay(image('icons/effects/Nuke_sprays.dmi', choice))
 		N.spray_icon_state = choice
-	if((istype(target, /obj/mecha) || isrobot(target)) && uses >= 10)
+	if((istype(target, /obj/mecha) || ismachinery(target) || isrobot(target)) && uses >= 10)
 		target.color = normalize_color(colour)
 		uses -= 10
 	if(istype(target, /obj/machinery/camera))

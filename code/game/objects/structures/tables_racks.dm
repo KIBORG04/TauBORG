@@ -142,23 +142,6 @@
 			return 1
 	return 0
 
-/obj/structure/table/bullet_act(obj/item/projectile/Proj, def_zone)
-	. = ..()
-
-	if(. == PROJECTILE_ABSORBED)
-		return
-
-	// try to shot mobs under table
-	var/list/mobs = list()
-	for(var/mob/living/M in get_turf(loc)) // todo: check only for crawling/lying
-		if(M in Proj.permutated)
-			continue
-		mobs += M
-
-	if(length(mobs))
-		var/mob/M = pick(mobs)
-		M.bullet_act(Proj, def_zone)
-
 //checks if projectile 'P' from turf 'from' can hit whatever is behind the table. Returns 1 if it can, 0 if bullet stops.
 /obj/structure/table/proc/check_cover(obj/item/projectile/P, turf/from)
 	var/turf/cover = flipped ? get_turf(src) : get_step(loc, get_dir(from, loc))
@@ -453,6 +436,7 @@
 	playsound(src, 'sound/weapons/tablehit1.ogg', VOL_EFFECTS_MASTER)
 
 	victim.log_combat(assailant, "face-slammed against [name]")
+	SEND_SIGNAL(assailant, COMSIG_HUMAN_HARMED_OTHER,victim)
 
 	if(prob(30) && ishuman(victim))
 		var/mob/living/carbon/human/H = victim
@@ -749,6 +733,18 @@
 	LH.pixel_y = p_y
 
 /*
+ * reinforced glass table
+ */
+
+/obj/structure/table/rglass
+	name = "reinforced glass table"
+	desc = "A reinforced version of the glass table"
+	icon = 'icons/obj/smooth_structures/rglass.dmi'
+	max_integrity = 100
+	parts = /obj/item/weapon/table_parts/rglass
+	flipable = FALSE
+
+/*
  * Racks
  */
 /obj/structure/rack // TODO subtype of table?
@@ -802,7 +798,7 @@
 		can_cut = HAS_TRAIT(D, TRAIT_DOUBLE_WIELDED)
 
 	if(!can_cut)
-		return ..()
+		return
 
 	user.do_attack_animation(src)
 	user.SetNextMove(CLICK_CD_MELEE)

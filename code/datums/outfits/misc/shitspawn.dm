@@ -147,7 +147,6 @@
 	gloves = /obj/item/clothing/gloves/black
 	l_ear = /obj/item/device/radio/headset
 	glasses = /obj/item/clothing/glasses/sunglasses
-	suit = /obj/item/clothing/suit/wcoat
 	l_pocket = /obj/item/weapon/melee/energy/sword
 	l_hand = /obj/item/weapon/storage/secure/briefcase
 	belt = /obj/item/device/pda/heads
@@ -267,7 +266,7 @@
 	back = /obj/item/weapon/storage/backpack/security
 	l_pocket = /obj/item/weapon/melee/energy/sword
 	r_pocket = /obj/item/weapon/grenade/empgrenade
-	belt = /obj/item/weapon/gun/projectile/automatic/silenced
+	belt = /obj/item/weapon/gun/projectile/automatic/pistol/silenced
 
 	backpack_contents = list(
 		/obj/item/weapon/storage/box,
